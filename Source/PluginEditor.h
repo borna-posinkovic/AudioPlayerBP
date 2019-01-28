@@ -17,7 +17,8 @@
 /**
 */
 class AudioPlayerBpAudioProcessorEditor  : public AudioProcessorEditor,
-										   public ChangeListener
+										   public ChangeListener,
+										   private Timer
 {
 public:
     AudioPlayerBpAudioProcessorEditor (AudioPlayerBpAudioProcessor&);
@@ -28,6 +29,17 @@ public:
     void resized() override;
 
 	void changeListenerCallback(ChangeBroadcaster* source) override;
+
+	void timerCallback() override
+	{
+		repaint();
+	}
+
+	void transportSourceChanged();
+	void thumbnailChanged();
+
+	void paintIfNoFileLoaded(Graphics& g, const Rectangle<int>& thumbnailBounds);
+	void paintIfFileLoaded(Graphics& g, const Rectangle<int>& thumbnailBounds);
 
 	void openButtonClicked();
 	void playButtonClicked();
@@ -50,6 +62,9 @@ private:
     AudioPlayerBpAudioProcessor& processor;
 
 	TransportState state;
+
+	AudioThumbnailCache thumbnailCache;
+	AudioThumbnail thumbnail;
 
 	TextButton playButton;
 	TextButton openButton;

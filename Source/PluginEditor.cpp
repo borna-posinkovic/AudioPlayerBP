@@ -13,7 +13,7 @@
 
 //==============================================================================
 AudioPlayerBpAudioProcessorEditor::AudioPlayerBpAudioProcessorEditor (AudioPlayerBpAudioProcessor& p)
-    : AudioProcessorEditor (&p), processor (p), state(Stopped)
+    : AudioProcessorEditor (&p), processor (p), state(Stopped), thumbnailCache(5), thumbnail(512, processor.formatManager, thumbnailCache)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -33,7 +33,11 @@ AudioPlayerBpAudioProcessorEditor::AudioPlayerBpAudioProcessorEditor (AudioPlaye
 	stopButton.setColour(TextButton::buttonColourId, Colours::red);
 	stopButton.setEnabled(false);
 
+
+	thumbnail.addChangeListener(this);
 	processor.transportSource.addChangeListener(this);
+
+	startTimer(40);
 }
 
 AudioPlayerBpAudioProcessorEditor::~AudioPlayerBpAudioProcessorEditor()
@@ -45,6 +49,12 @@ void AudioPlayerBpAudioProcessorEditor::paint (Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
+
+	juce::Rectangle<int> thumbnailBounds(10, 100, getWidth() - 20, getHeight() - 120);
+	if (thumbnail.getNumChannels() == 0)
+		paintIfNoFileLoaded(g, thumbnailBounds);
+	else
+		paintIfFileLoaded(g, thumbnailBounds);
 
 
 }
@@ -60,12 +70,10 @@ void AudioPlayerBpAudioProcessorEditor::resized()
 void AudioPlayerBpAudioProcessorEditor::changeListenerCallback(ChangeBroadcaster* source)
 {
 	if (source == &processor.transportSource)
-	{
-		if (processor.transportSource.isPlaying())
-			changeState(Playing);
-		else
-			changeState(Stopped);
-	}
+		transportSourceChanged();
+	else if (source == &thumbnail)
+		thumbnailChanged();
+	
 }
 
 
@@ -76,19 +84,19 @@ void AudioPlayerBpAudioProcessorEditor::changeState(TransportState newState) {
 		state = newState;
 		switch (state)
 		{
-		case Stopped:                           // [3]
+		case Stopped:                           
 			stopButton.setEnabled(false);
 			playButton.setEnabled(true);
 			processor.transportSource.setPosition(0.0);
 			break;
-		case Starting:                          // [4]
+		case Starting:                          
 			playButton.setEnabled(false);
 			processor.transportSource.start();
 			break;
-		case Playing:                           // [5]
+		case Playing:                           
 			stopButton.setEnabled(true);
 			break;
-		case Stopping:                          // [6]
+		case Stopping:                          
 			processor.transportSource.stop();
 			break;
 		}
@@ -100,17 +108,18 @@ void AudioPlayerBpAudioProcessorEditor::openButtonClicked()
 {
 	FileChooser chooser("Select a Wave file to play...",
 		{},
-		"*.wav");                                        // [7]
-	if (chooser.browseForFileToOpen())                                    // [8]
+		"*.wav");                                      
+	if (chooser.browseForFileToOpen())                                 
 	{
-		auto file = chooser.getResult();                                  // [9]
-		auto* reader = processor.formatManager.createReaderFor(file);              // [10]
+		File file = chooser.getResult();                                  
+		auto* reader = processor.formatManager.createReaderFor(file);              
 		if (reader != nullptr)
 		{
-			std::unique_ptr<AudioFormatReaderSource> newSource(new AudioFormatReaderSource(reader, true)); // [11]
-			processor.transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);                     // [12]
-			playButton.setEnabled(true);                                                                    // [13]
-			processor.readerSource.reset(newSource.release());                                                        // [14]
+			std::unique_ptr<AudioFormatReaderSource> newSource(new AudioFormatReaderSource(reader, true)); 
+			processor.transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);                     
+			playButton.setEnabled(true);    
+			thumbnail.setSource(new FileInputSource(file));
+			processor.readerSource.reset(newSource.release());                                                      
 		}
 	}
 }
@@ -125,3 +134,41 @@ void AudioPlayerBpAudioProcessorEditor::stopButtonClicked()
 	changeState(Stopping);
 }
 
+void AudioPlayerBpAudioProcessorEditor::transportSourceChanged()
+{
+	if (processor.transportSource.isPlaying())
+		changeState(Playing);
+	else
+		changeState(Stopped);
+}
+
+void AudioPlayerBpAudioProcessorEditor::thumbnailChanged() {
+
+	repaint();
+
+}
+
+void AudioPlayerBpAudioProcessorEditor::paintIfNoFileLoaded(Graphics& g, const Rectangle<int>& thumbnailBounds) {
+	g.setColour(Colours::darkgrey);
+	g.fillRect(thumbnailBounds);
+	g.setColour(Colours::white);
+	g.drawFittedText("No File Loaded", thumbnailBounds, Justification::centred, 1.0f);
+
+}
+
+void AudioPlayerBpAudioProcessorEditor::paintIfFileLoaded(Graphics& g, const Rectangle<int>& thumbnailBounds) {
+
+	g.setColour(Colours::white);
+	g.fillRect(thumbnailBounds);
+	g.setColour(Colours::red);                                     
+	thumbnail.drawChannels(g, thumbnailBounds, 0.0, thumbnail.getTotalLength(), 1.0f);  
+
+	auto audioLength(thumbnail.getTotalLength());                                      
+	thumbnail.drawChannels(g, thumbnailBounds, 0.0, audioLength, 1.0f);
+
+	g.setColour(Colours::green);
+	auto audioPosition(processor.transportSource.getCurrentPosition());
+	auto drawPosition((audioPosition / audioLength) * thumbnailBounds.getWidth() + thumbnailBounds.getX());    
+	g.drawLine(drawPosition, thumbnailBounds.getY(), drawPosition, thumbnailBounds.getBottom(), 2.0f);
+
+}
