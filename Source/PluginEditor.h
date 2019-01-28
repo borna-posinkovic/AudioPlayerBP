@@ -12,13 +12,14 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
+#include "ThumbnailWaveform.h"
+#include "ThumbnailPositionLine.h"
 
 //==============================================================================
 /**
 */
 class AudioPlayerBpAudioProcessorEditor  : public AudioProcessorEditor,
-										   public ChangeListener,
-										   private Timer
+										   public ChangeListener
 {
 public:
     AudioPlayerBpAudioProcessorEditor (AudioPlayerBpAudioProcessor&);
@@ -30,16 +31,7 @@ public:
 
 	void changeListenerCallback(ChangeBroadcaster* source) override;
 
-	void timerCallback() override
-	{
-		repaint();
-	}
-
 	void transportSourceChanged();
-	void thumbnailChanged();
-
-	void paintIfNoFileLoaded(Graphics& g, const Rectangle<int>& thumbnailBounds);
-	void paintIfFileLoaded(Graphics& g, const Rectangle<int>& thumbnailBounds);
 
 	void openButtonClicked();
 	void playButtonClicked();
@@ -57,15 +49,14 @@ public:
 	void changeState(TransportState newState);
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
+    
     AudioPlayerBpAudioProcessor& processor;
 
 	TransportState state;
 
 	AudioThumbnailCache thumbnailCache;
-	AudioThumbnail thumbnail;
-
+	ThumbnailWaveform thumbnailComponent;
+	ThumbnailPositionLine positionLine;
 	TextButton playButton;
 	TextButton openButton;
 	TextButton stopButton;
