@@ -33,6 +33,8 @@ public:
 
 	void transportSourceChanged();
 
+	void loadFileIntoTransport(const File& file);
+
 	void openButtonClicked();
 	void playButtonClicked();
 	void stopButtonClicked();
@@ -46,6 +48,8 @@ public:
 	};
 
 
+	File currentFile;
+
 	void changeState(TransportState newState);
 
 private:
@@ -53,6 +57,7 @@ private:
     AudioPlayerBpAudioProcessor& processor;
 
 	TransportState state;
+
 
 	AudioThumbnailCache thumbnailCache;
 	ThumbnailWaveform thumbnailComponent;

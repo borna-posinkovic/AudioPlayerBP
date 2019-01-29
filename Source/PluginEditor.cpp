@@ -14,7 +14,7 @@
 //==============================================================================
 AudioPlayerBpAudioProcessorEditor::AudioPlayerBpAudioProcessorEditor (AudioPlayerBpAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p), state(Stopped), thumbnailCache(5), 
-	thumbnailComponent(512, processor.formatManager, thumbnailCache), positionLine(processor.transportSource)
+	thumbnailComponent(512, processor.formatManager, thumbnailCache, currentFile), positionLine(processor.transportSource)
 {
  
     setSize (400, 300);
@@ -67,7 +67,13 @@ void AudioPlayerBpAudioProcessorEditor::changeListenerCallback(ChangeBroadcaster
 {
 	if (source == &processor.transportSource)
 		transportSourceChanged();
-	
+	else if (source == &thumbnailComponent) {
+		{
+			currentFile = thumbnailComponent.getLastDroppedFile();
+			loadFileIntoTransport(currentFile);
+			thumbnailComponent.setFile(currentFile);
+		}
+	}
 }
 
 
@@ -105,18 +111,27 @@ void AudioPlayerBpAudioProcessorEditor::openButtonClicked()
 		"*.wav");                                      
 	if (chooser.browseForFileToOpen())                                 
 	{
-		File file = chooser.getResult();                                  
-		auto* reader = processor.formatManager.createReaderFor(file);              
-		if (reader != nullptr)
-		{
-			std::unique_ptr<AudioFormatReaderSource> newSource(new AudioFormatReaderSource(reader, true)); 
-			processor.transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);                     
-			playButton.setEnabled(true);   
-			thumbnailComponent.setFile(file);
-			processor.readerSource.reset(newSource.release());                                                      
-		}
+		currentFile = chooser.getResult();                                  
+		loadFileIntoTransport(currentFile);
 	}
 }
+
+void AudioPlayerBpAudioProcessorEditor::loadFileIntoTransport(const File& audioFile) {
+
+	processor.transportSource.stop();
+	processor.transportSource.setSource(nullptr);
+
+	auto* reader = processor.formatManager.createReaderFor(audioFile);
+	if (reader != nullptr)
+	{
+		std::unique_ptr<AudioFormatReaderSource> newSource(new AudioFormatReaderSource(reader, true));
+		processor.transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
+		playButton.setEnabled(true);
+		thumbnailComponent.setFile(currentFile);
+		processor.readerSource.reset(newSource.release());
+	}
+}
+
 
 void AudioPlayerBpAudioProcessorEditor::playButtonClicked()
 {

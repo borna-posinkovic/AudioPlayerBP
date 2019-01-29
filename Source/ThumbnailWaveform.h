@@ -18,14 +18,18 @@
 /*
 */
 class ThumbnailWaveform    : public Component,
-							 public ChangeListener
+							 public ChangeListener,
+							 public ChangeBroadcaster,
+							 public FileDragAndDropTarget
 {
 public:
-    ThumbnailWaveform(int sourceSamplesPerThumbnailSample, AudioFormatManager& formatManager, AudioThumbnailCache& cache)
+    ThumbnailWaveform(int sourceSamplesPerThumbnailSample, AudioFormatManager& formatManager, AudioThumbnailCache& cache, const File& currentlyLoadedFile)
 		: thumbnail(sourceSamplesPerThumbnailSample, formatManager, cache)
     {
 
 		thumbnail.addChangeListener(this);
+
+		setFile(currentlyLoadedFile);
 
     }
 
@@ -33,6 +37,17 @@ public:
     {
     }
 
+	bool isInterestedInFileDrag(const StringArray &files) override
+	{
+		return true;
+	}
+
+	void filesDropped(const StringArray &files, int x, int y) override {
+
+		lastFileDropped = File(files[0]);
+		sendChangeMessage();
+
+	}
 
 	void setFile(const File& file) {
 
@@ -67,8 +82,15 @@ public:
 
 	void changeListenerCallback(ChangeBroadcaster* source) override
 	{
-		if (source == &thumbnail)
+		if (source == &thumbnail) {
 			thumbnailChanged();
+		}
+	}
+
+	
+	File getLastDroppedFile() {
+
+		return lastFileDropped;
 
 	}
 
@@ -83,11 +105,16 @@ public:
 
 private:
 	
+
 	AudioThumbnail thumbnail;
+	File lastFileDropped;
+
+
 
 	void thumbnailChanged() {
 
 		repaint();
+
 	}
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ThumbnailWaveform)
