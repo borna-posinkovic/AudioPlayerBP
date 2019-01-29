@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="i3x3fa" name="AudioPlayerBP" projectType="audioplug" jucerVersion="5.4.1"
-              pluginFormats="buildVST3">
+              pluginFormats="buildStandalone,buildVST3">
   <MAINGROUP id="YOfaSd" name="AudioPlayerBP">
     <GROUP id="{8FACFA12-E8DE-2848-D97E-B90DBAEC483B}" name="Source">
       <FILE id="wZCL9W" name="PluginProcessor.cpp" compile="1" resource="0"

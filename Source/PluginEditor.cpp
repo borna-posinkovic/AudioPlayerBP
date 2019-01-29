@@ -38,6 +38,7 @@ AudioPlayerBpAudioProcessorEditor::AudioPlayerBpAudioProcessorEditor (AudioPlaye
 	addAndMakeVisible(&thumbnailComponent);
 	addAndMakeVisible(&positionLine);
 	
+	thumbnailComponent.addChangeListener(this);
 	processor.transportSource.addChangeListener(this);
 }
 
@@ -67,6 +68,7 @@ void AudioPlayerBpAudioProcessorEditor::changeListenerCallback(ChangeBroadcaster
 {
 	if (source == &processor.transportSource)
 		transportSourceChanged();
+
 	else if (source == &thumbnailComponent) {
 		{
 			currentFile = thumbnailComponent.getLastDroppedFile();

@@ -45,7 +45,7 @@ public:
 	void filesDropped(const StringArray &files, int x, int y) override {
 
 		lastFileDropped = File(files[0]);
-		sendChangeMessage();
+		thumbnail.sendChangeMessage();
 
 	}
 
