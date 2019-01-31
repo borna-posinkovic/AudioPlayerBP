@@ -13,9 +13,21 @@
 
 //==============================================================================
 AudioPlayerBpAudioProcessor::AudioPlayerBpAudioProcessor()
-     : AudioProcessor (BusesProperties().withOutput("Output", AudioChannelSet::stereo()))
-{
-
+     : AudioProcessor (BusesProperties().withOutput("Output", AudioChannelSet::stereo())),
+	parametersTree(*this, nullptr, Identifier("AudioPlayerState"),
+		{
+			std::make_unique<AudioParameterFloat>("gain",            // parameterID
+												   "Gain",            // parameter name
+												   0.0f,              // minimum value
+												   1.0f,              // maximum value
+												   0.5f),             // default value
+			std::make_unique<AudioParameterBool>("invertPhase",      // parameterID
+												  "Invert Phase",     // parameter name
+												  false)              // default value
+		})
+{	
+	gainParameter = parametersTree.getRawParameterValue("gain");
+	phaseParameter = parametersTree.getRawParameterValue("invertPhase");
 	formatManager.registerBasicFormats();
 }
 
@@ -89,6 +101,8 @@ void AudioPlayerBpAudioProcessor::changeProgramName (int index, const String& ne
 void AudioPlayerBpAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
 	transportSource.prepareToPlay(samplesPerBlock, sampleRate);
+	auto phase = *phaseParameter < 0.5f ? 1.0f : -1.0f;
+	previousGain = *gainParameter * phase;
 }
 
 void AudioPlayerBpAudioProcessor::releaseResources()
@@ -122,14 +136,29 @@ bool AudioPlayerBpAudioProcessor::isBusesLayoutSupported (const BusesLayout& lay
 
 void AudioPlayerBpAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
-    ScopedNoDenormals noDenormals;
+   
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+	for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+		buffer.clear(i, 0, buffer.getNumSamples());
 
 	transportSource.getNextAudioBlock(AudioSourceChannelInfo(buffer));
+
+	auto phase = *phaseParameter < 0.5f ? 1.0f : -1.0f;
+	auto currentGain = *gainParameter * phase;
+
+	if (currentGain == previousGain)
+	{
+		buffer.applyGain(currentGain);
+	}
+	else
+	{
+		buffer.applyGainRamp(0, buffer.getNumSamples(), previousGain, currentGain);
+		previousGain = currentGain;
+	}
+
+   
 }
 
 //==============================================================================

@@ -35,10 +35,24 @@ AudioPlayerBpAudioProcessorEditor::AudioPlayerBpAudioProcessorEditor (AudioPlaye
 	stopButton.setColour(TextButton::buttonColourId, Colours::red);
 	stopButton.setEnabled(false);
 
+	addAndMakeVisible(&gainSlider);
+	addAndMakeVisible(&gainLabel);
+	gainSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+	gainLabel.setText("Gain", dontSendNotification);
+	gainLabel.attachToComponent(&gainSlider, true);
+	gainSlider.setRange(0.0f, 1.0f);
+	gainSlider.setValue(0.5);
+	
+
+	addAndMakeVisible(&invertPhaseButton);
+
 	addAndMakeVisible(&thumbnailComponent);
 	addAndMakeVisible(&positionLine);
 	
 	processor.transportSource.addChangeListener(this);
+
+	gainValue.reset(new SliderAttachment(processor.parametersTree, "gain", gainSlider));
+	invertPhaseValue.reset(new ButtonAttachment(processor.parametersTree, "invertPhase", invertPhaseButton));
 }
 
 AudioPlayerBpAudioProcessorEditor::~AudioPlayerBpAudioProcessorEditor()
@@ -57,9 +71,10 @@ void AudioPlayerBpAudioProcessorEditor::resized()
 	playButton.setBounds(10, 40, getWidth() - 10, 20);
 	stopButton.setBounds(10, 70, getWidth() - 10, 20);
 
-	Rectangle<int> thumbnailBounds(10, 100, getWidth() - 20, getHeight() - 120);
+	Rectangle<int> thumbnailBounds(10, 100, getWidth() - 20, getHeight() - 150);
 	thumbnailComponent.setBounds(thumbnailBounds);
 	positionLine.setBounds(thumbnailBounds);
+	gainSlider.setBounds(10, 260, getWidth() - 50, 20);
 }
 
 

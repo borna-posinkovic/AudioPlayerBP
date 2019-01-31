@@ -22,6 +22,11 @@ class AudioPlayerBpAudioProcessorEditor  : public AudioProcessorEditor,
 										   public ChangeListener
 {
 public:
+
+	typedef AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
+	typedef AudioProcessorValueTreeState::ButtonAttachment ButtonAttachment;
+
+
     AudioPlayerBpAudioProcessorEditor (AudioPlayerBpAudioProcessor&);
     ~AudioPlayerBpAudioProcessorEditor();
 
@@ -60,6 +65,13 @@ private:
 	TextButton playButton;
 	TextButton openButton;
 	TextButton stopButton;
+
+	Label gainLabel;
+	Slider gainSlider;
+	std::unique_ptr <SliderAttachment> gainValue;
+
+	ToggleButton invertPhaseButton;
+	std::unique_ptr <ButtonAttachment> invertPhaseValue;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPlayerBpAudioProcessorEditor)
 };

@@ -60,11 +60,14 @@ public:
 	AudioFormatManager formatManager;
 	std::unique_ptr<AudioFormatReaderSource> readerSource;
 	AudioTransportSource transportSource;
-
-	
+	AudioProcessorValueTreeState parametersTree;
 
 private:
     //==============================================================================
+	float previousGain;
+
+	float* phaseParameter = nullptr;
+	float* gainParameter = nullptr;
 
 	
 
