@@ -14,3 +14,8 @@ Current features:
 To do:
 1. Add a pause button, maybe change the interface
 2. Add an equalizer
+
+
+Currently the apps looks like this:
+
+![capture](https://user-images.githubusercontent.com/46653661/53829617-d5fcf780-3f80-11e9-9524-eca6a14700a9.PNG)
