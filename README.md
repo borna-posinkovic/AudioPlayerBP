@@ -16,7 +16,7 @@ To do:
 2. Add an equalizer
 
 
-Currently the apps looks like this:
+Currently the app looks like this:
 
 ![capture 2](https://user-images.githubusercontent.com/46653661/53829610-d39a9d80-3f80-11e9-96d3-446f2849cf8b.PNG)
 
